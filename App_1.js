@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   View, Alert,
   TouchableOpacity,
+  AsyncStorage
 } from 'react-native';
 import moment from 'moment';
 // import {Link} from 'react-router-dom';
@@ -40,7 +41,7 @@ class MultipleRegionComponents extends Component {
   constructor(props){
     super(props);
     this.state={
-      tabs:[
+      deftabs:[
         {
           name:'USA',
           slug:'us'
@@ -61,20 +62,45 @@ class MultipleRegionComponents extends Component {
           name:'RUSSIA',
           slug:'ru'
         }
-      ]
+      ],
+      tabs:[]
+
     }
   }
 
+  componentDidMount(){
+this._retrieveData()
+  }
+
+  _retrieveData = async () => {
+    try {
+      const value = await AsyncStorage.getItem('countries');
+      if (value !== null) {
+        // We have data!!
+        // if(JSON.parse(value).arr.length===0){
+        //     this.props.navigation.push("chooseCountry");
+        // }
+        // else
+        let arr=JSON.parse(value).arr;
+        for(var i=0;i<arr.length;i++){
+          arr[i]=this.state.deftabs[this.state.deftabs.findIndex(x=>x.slug===arr[i])]
+        }
+        console.log(arr);
+             this.setState({tabs:arr})
+        // return value;
+      }
+    } catch (error) {
+      // Error retrieving data
+      console.log(error);
+    }
+  };
  
   render(){
-
+// console.log(this.state.tabs)
     return(
       <View style={{backgroundColor: 'white'}}>
 
       
-        <View style={{flexDirection:'row'}}>
-          <Text style={{marginLeft:10,marginTop:10,fontSize:17,fontWeight:'700'}}>Choose a country and read top news headline</Text>
-        </View>
         <View style={{flexDirection:'row',justifyContent:'center',marginTop:10}}>
           {
             this.state.tabs.map((item,key)=>{
@@ -142,13 +168,13 @@ export class Home extends Component {
 
   async getCountryNews(name){
     this.setState({isLoading:true,articles:[]})
-    console.log('geee')
+    // console.log('geee')
     try {
       let response = await fetch(
         'https://newsapi.org/v2/top-headlines?country='+name+'&apiKey=fdbc830564fe49b49fd81a2f8da2daa0',
       );
       let responseJson = await response.json();
-      console.log("dsds",responseJson);
+      // console.log("dsds",responseJson);
       this.setState({articles:responseJson.articles,isLoading:false});
     } catch (error) {
       console.log("err",error);
