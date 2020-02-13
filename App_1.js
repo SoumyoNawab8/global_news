@@ -13,6 +13,7 @@ import moment from 'moment';
 import { NavigationBar } from 'navigationbar-react-native';
 import { StackNavigator  } from 'react-navigation';
 import { createStackNavigator } from 'react-navigation-stack';
+import Header from './components/header';
  
 const ComponentLeft = () => {
   return(
@@ -98,7 +99,7 @@ this._retrieveData()
   render(){
 // console.log(this.state.tabs)
     return(
-      <View style={{backgroundColor: 'white'}}>
+      <View style={{flex:0,backgroundColor: 'white'}}>
 
       
         <View style={{flexDirection:'row',justifyContent:'center',marginTop:10}}>
@@ -152,19 +153,60 @@ export class Home extends Component {
       articles:[],
       isLoading:true,
       activeCountry:'us',
-      activeNews:{}
+      activeNews:{},
+      deftabs:[{
+        name:'USA',
+        slug:'us'
+      },
+      {
+        name:'INDIA',
+        slug:'in'
+      },
+      {
+        name:'FRANCE',
+        slug:'fr'
+      },
+      {
+        name:'CANADA',
+        slug:'ca'
+      },
+      {
+        name:'RUSSIA',
+        slug:'ru'
+      }],tabs:[]
     }
   }
 
   UNSAFE_componentWillMount(){
-    this.getCountryNews('us')
-    var self=this;
-    // setInterval(function(){
-      self.setState({time:moment().format(' h:mm a').toString()})
+    
+    this._retrieveData()
 
     // })
   }
 
+  _retrieveData = async () => {
+    try {
+      const value = await AsyncStorage.getItem('countries');
+      if (value !== null) {
+        // We have data!!
+        // if(JSON.parse(value).arr.length===0){
+        //     this.props.navigation.push("chooseCountry");
+        // }
+        // else
+        let arr=JSON.parse(value).arr;
+        for(var i=0;i<arr.length;i++){
+          arr[i]=this.state.deftabs[this.state.deftabs.findIndex(x=>x.slug===arr[i])]
+        }
+        console.log(arr);
+             this.setState({tabs:arr,activeCountry:arr[0].slug});
+             this.getCountryNews(arr[0].slug);
+        // return value;
+      }
+    } catch (error) {
+      // Error retrieving data
+      console.log(error);
+    }
+  };
 
   async getCountryNews(name){
     this.setState({isLoading:true,articles:[]})
@@ -218,45 +260,12 @@ export class Home extends Component {
 
 // const Stack = createStackNavigator();
 export default class App_1 extends Component {
- constructor(props){
-   super(props);
-   this.state={
-    time:'',
-   }
-   
- }
-
-
- UNSAFE_componentWillMount(){
-
-  var self=this;
-
-    self.setState({time:moment().format(' h:mm a').toString()})
-
-
-}
+ 
  render(){
    return(
     <>
-      {/* <View style={styles.container}>
-        <NavigationBar 
-          componentLeft     = { () =>  <ComponentLeft />   }
-          componentCenter   = { () =>  <ComponentCenter  /> }
-          componentRight    = { () =>  <View style={{ flex: 1, alignItems: 'flex-end',paddingBottom:0 }}>
-      <TouchableOpacity>
-        <Text style={{ color: 'rgb(70, 48, 235)',fontWeight:'bold' }}> {this.state.time} </Text>
-      </TouchableOpacity>
-    </View>  }
-          navigationBarStyle= {{ backgroundColor: 'white',color:'rgb(70, 48, 235)',height:60}}
-          statusBarStyle    = {{ barStyle: 'light-content', backgroundColor: 'rgb(70, 48, 235)' }}
-        />
-      </View> */}
-      {/* <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="Home" component={Home} />
-      </Stack.Navigator>
-    </NavigationContainer>
-      */}
+      <Header /> 
+     <Home />
       
  
   </>

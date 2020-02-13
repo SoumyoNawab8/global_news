@@ -9,12 +9,12 @@ import {
 } from 'react-native';
 import { createAppContainer, createSwitchNavigator } from 'react-navigation';
 import {createStackNavigator} from 'react-navigation-stack';
-import {Home} from './App_1';
+import App_1 from './App_1';
 import ChoseCountry from './screens/chooseCountry';
 
 export default createAppContainer(
 	createStackNavigator({
-        Home:Home,
+        Home:App_1,
         chooseCountry:ChoseCountry
 		
 	},{
