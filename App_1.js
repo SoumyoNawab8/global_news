@@ -9,11 +9,9 @@ import {
   AsyncStorage
 } from 'react-native';
 import moment from 'moment';
-// import {Link} from 'react-router-dom';
-import { NavigationBar } from 'navigationbar-react-native';
-import { StackNavigator  } from 'react-navigation';
-import { createStackNavigator } from 'react-navigation-stack';
 import Header from './components/header';
+import GestureRecognizer, {swipeDirections} from 'react-native-swipe-gestures';
+
  
 const ComponentLeft = () => {
   return(
@@ -42,6 +40,7 @@ class MultipleRegionComponents extends Component {
   constructor(props){
     super(props);
     this.state={
+      gestureName: 'none',
       deftabs:[
         {
           name:'USA',
@@ -72,21 +71,16 @@ class MultipleRegionComponents extends Component {
   componentDidMount(){
 this._retrieveData()
   }
-
   _retrieveData = async () => {
     try {
       const value = await AsyncStorage.getItem('countries');
       if (value !== null) {
-        // We have data!!
-        // if(JSON.parse(value).arr.length===0){
-        //     this.props.navigation.push("chooseCountry");
-        // }
-        // else
+        
         let arr=JSON.parse(value).arr;
         for(var i=0;i<arr.length;i++){
           arr[i]=this.state.deftabs[this.state.deftabs.findIndex(x=>x.slug===arr[i])]
         }
-        console.log(arr);
+        // console.log(arr);
              this.setState({tabs:arr})
         // return value;
       }
@@ -95,23 +89,36 @@ this._retrieveData()
       console.log(error);
     }
   };
+
  
+  changeCountry = async () => {
+    try {
+      let val=await AsyncStorage.setItem('setNtn', "true");
+    //   this.props.navigation.push("Home")
+    if(val===null){
+      this.props.navigation.push('chooseCountry');
+    }
+
+    } catch (error) {
+      // Error saving data
+      console.log(error);
+    }
+  };
   render(){
-// console.log(this.state.tabs)
     return(
-      <View style={{flex:0,backgroundColor: 'white'}}>
+      // <View style={{flex:0,backgroundColor: 'white',paddingBottom:10}}>
 
       
-        <View style={{flexDirection:'row',justifyContent:'center',marginTop:10}}>
+        <View style={{flex:0,flexDirection:'row',justifyContent:'center',paddingTop:10,paddingBottom:10,backgroundColor: 'white'}}>
           {
             this.state.tabs.map((item,key)=>{
-              return <TouchableOpacity  key={key} onPress={()=>this.props.selectCountry(item.slug)}>
+              return <TouchableOpacity  key={key} onLongPress={()=>{this.changeCountry()}} onPress={()=>this.props.selectCountry(item.slug)}>
                       <Text style={this.props.activeCountry===item.slug?styles.tabActive:styles.tab}>{item.name}</Text>
                     </TouchableOpacity> 
             })
           }
         </View>
-      </View>
+      // </View>
     )
   }
 }
@@ -124,9 +131,8 @@ class Cards extends Component{
     
   }
   render(){
-    // console.log(this.props.articles[0]!==undefined?this.props.articles[0].urlToImage:null)
     return(
-      <ScrollView style={{flex:3,flexDirection:'column',marginTop:10,backgroundColor: 'white'}}>
+      <ScrollView style={{flex:3,flexDirection:'column',paddingTop:5,backgroundColor: 'white'}}>
           {
             this.props.articles.map((item,indx)=>{
              
@@ -154,6 +160,7 @@ export class Home extends Component {
       isLoading:true,
       activeCountry:'us',
       activeNews:{},
+      gestureName:"",
       deftabs:[{
         name:'USA',
         slug:'us'
@@ -175,6 +182,9 @@ export class Home extends Component {
         slug:'ru'
       }],tabs:[]
     }
+    this.onSwipe=this.onSwipe.bind(this);
+    this.onSwipeLeft=this.onSwipeLeft.bind(this);
+    this.onSwipeRight=this.onSwipeRight.bind(this);
   }
 
   UNSAFE_componentWillMount(){
@@ -197,7 +207,6 @@ export class Home extends Component {
         for(var i=0;i<arr.length;i++){
           arr[i]=this.state.deftabs[this.state.deftabs.findIndex(x=>x.slug===arr[i])]
         }
-        console.log(arr);
              this.setState({tabs:arr,activeCountry:arr[0].slug});
              this.getCountryNews(arr[0].slug);
         // return value;
@@ -229,31 +238,81 @@ export class Home extends Component {
     this.getCountryNews(name)
   }
 
+  viewDetails= async (data) => {
+    let val= await AsyncStorage.setItem('details',JSON.stringify(data));
+    if(val===null){
+      this.props.navigation.push("newsDetails")
+    }
+  }
+
+
+  
+  onSwipeLeft(gestureState) {
+    let {tabs,activeCountry}=this.state;
+    let activeCountryIndx=tabs.findIndex(tab => tab.slug===activeCountry);
+    if(activeCountryIndx<tabs.length-1){
+      activeCountryIndx++;
+    }
+    else{
+      activeCountryIndx=0;
+    }
+    console.log(tabs[activeCountryIndx].slug)
+    this._switchCountry(tabs[activeCountryIndx].slug);
+  }
+ 
+  onSwipeRight(gestureState) {
+    let {tabs,activeCountry}=this.state;
+    let activeCountryIndx=tabs.findIndex(tab => tab.slug===activeCountry);
+    if(activeCountryIndx>0){
+      activeCountryIndx--;
+    }
+    else{
+      activeCountryIndx=tabs.length-1;
+    }
+    console.log(tabs[activeCountryIndx].slug)
+    this._switchCountry(tabs[activeCountryIndx].slug);
+  }
+
+  onSwipe(gestureName, gestureState) {
+    const {SWIPE_LEFT, SWIPE_RIGHT} = swipeDirections;
+    this.setState({gestureName: gestureName});
+    switch (gestureName) {
+      case SWIPE_LEFT:
+        this.setState({gestureName: 'blue'});
+        break;
+      case SWIPE_RIGHT:
+        this.setState({gestureName: 'yellow'});
+        break;
+    }
+  }
 
   render() {
 
 
     return (
-      <React.Fragment >
-      {this.state.activeNews.title?
-      <React.Fragment>
-      <View>
-        <Text onPress={()=>this.setState({activeNews:{}})}>Back </Text>
-      </View>
-      <ScrollView style={{marginTop:20}}>
-        <Text style={{fontSize:20,marginLeft:20}}>{this.state.activeNews.title}</Text>
-        <Image source={{uri:this.state.activeNews.urlToImage}} onPress={()=>this.props.onActive(item)} style={{marginLeft:20,width: 350, height: 250,}} />
-        <Text>{this.state.activeNews.content}</Text>
-      </ScrollView>
-      </React.Fragment>
-        
-      :<React.Fragment>
-      <MultipleRegionComponents activeCountry={this.state.activeCountry} selectCountry={(name)=>this._switchCountry(name)} />
+      // <React.Fragment >
+      <GestureRecognizer
+        onSwipe={this.onSwipe}
+        onSwipeLeft={this.onSwipeLeft}
+        onSwipeRight={this.onSwipeRight}
+        config={{
+          velocityThreshold: 0.3,
+          directionalOffsetThreshold: 80
+        }}
+        style={{
+          flex: 1,
+          // backgroundColor: 'grey'
+        }}
+        >
+
+<MultipleRegionComponents navigation={this.props.navigation} activeCountry={this.state.activeCountry} selectCountry={(name)=>this._switchCountry(name)} />
       {
         this.state.isLoading?<ActivityIndicator size="large" color="rgb(70, 48, 235)" style={{flex:2,flexDirection:'column',justifyContent:'center'}} />:
-      <Cards onActive={(data)=>this.setState({activeNews:data})} articles={this.state.articles} />}
-      </React.Fragment>}
-      </React.Fragment>
+      <Cards onActive={(data)=>{this.viewDetails(data)}} articles={this.state.articles} />}
+        </GestureRecognizer>
+      
+      
+      // </React.Fragment>
     );
   }
 }
@@ -265,8 +324,7 @@ export default class App_1 extends Component {
    return(
     <>
       <Header /> 
-     <Home />
-      
+     <Home navigation={this.props.navigation} />
  
   </>
    )
@@ -278,7 +336,7 @@ const styles=StyleSheet.create({
     // borderRadius: 4,
     // height:50,
     backgroundColor: 'white',
-    marginTop:30,
+    marginTop:25,
     borderBottomWidth: 2,
     borderColor: 'rgb(70, 48, 235)'
     

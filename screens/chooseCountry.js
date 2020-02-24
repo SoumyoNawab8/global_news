@@ -52,10 +52,19 @@ export default class ChoseCountry extends Component {
       _retrieveData = async () => {
         try {
           const value = await AsyncStorage.getItem('countries');
+          const pgeFM= await AsyncStorage.getItem('setNtn');
           if (value !== null) {
             // We have data!!
             if(JSON.parse(value).arr.length>0){
+              if(pgeFM){
+                this.setState({selectedCntry:JSON.parse(value).arr})
+                AsyncStorage.removeItem('setNtn');
+              }
+              else{
                 this.props.navigation.push("Home");
+              }
+              
+                
             }
             else
                  this.setState({selectedCntry:JSON.parse(value).arr})
